@@ -1,20 +1,18 @@
-// src/App.js
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Signup from './auth/Signup';
-import Login from './auth/Login';
+import Layout from './pages/Layout';
 import Dashboard from './pages/Dashboard';
 import AddPatient from './pages/AddPatient';
-import './App.css';
+import UpdateProfile from './pages/UpdateProfile';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/add-patient" element={<AddPatient />} />
+        <Route path="/" element={<Layout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="add-patient" element={<AddPatient />} />
+          <Route path="update-profile" element={<UpdateProfile />} />
+        </Route>
       </Routes>
     </Router>
   );
