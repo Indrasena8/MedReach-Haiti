@@ -32,22 +32,28 @@ export default function Signup() {
     }
 
     try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCred.user.uid;
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+  const uid = userCred.user.uid;
 
-      await setDoc(doc(db, 'doctors', uid), {
-        firstName,
-        lastName,
-        email,
-        qualification,
-        experience,
-        specialization
-      });
+  await setDoc(doc(db, 'doctors', uid), {
+    firstName,
+    lastName,
+    email,
+    qualification,
+    experience,
+    specialization
+  });
 
-      navigate('/'); // redirect to login after signup
-    } catch (err) {
-      setError(err.message);
-    }
+  alert("Signup successful! Redirecting to login...");
+  navigate('/'); // redirect to login after signup
+} catch (err) {
+  if (err.code === 'auth/email-already-in-use') {
+    alert("This email is already registered. Redirecting to login...");
+    navigate('/');
+  } else {
+    setError(err.message);
+  }
+}
   };
 
   return (
