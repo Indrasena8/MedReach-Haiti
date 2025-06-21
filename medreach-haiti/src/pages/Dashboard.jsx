@@ -98,25 +98,25 @@ export default function Dashboard() {
           />
 
           {/* Patient List */}
-          {filteredPatients.length === 0 ? (
-            <p>No matching patients found.</p>
-          ) : (
-            filteredPatients.map((p, i) => (
-              <div key={i} className="patient-card" style={{
-                backgroundColor: '#fff',
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderLeft: '5px solid #198754',
-                borderRadius: '5px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }}>
-                <strong>{p.name}</strong> ({p.gender})<br />
-                DOB: {p.dob} <br />
-                Diagnosis: {p.diagnosis}<br />
-                Notes: {p.notes}
-              </div>
-            ))
-          )}
+          {filteredPatients.map((p, i) => (
+  <div
+    key={p.id || i}
+    className="patient-card"
+    style={{
+      backgroundColor: '#fff',
+      padding: '1rem',
+      marginBottom: '1rem',
+      borderLeft: '5px solid #198754',
+      borderRadius: '5px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      cursor: 'pointer'
+    }}
+    onClick={() => navigate(`/patient/${p.id}`)}
+  >
+    <strong>{p.name}</strong><br />
+    DOB: {p.dob}
+  </div>
+))}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from '../auth/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { auth } from '../auth/firebase';
 import { useNavigate } from 'react-router-dom';
@@ -31,24 +31,52 @@ export default function AddPatient() {
       return;
     }
 
-    const newPatient = {
-      id: uuidv4(),
-      name,
-      gender,
-      dob,
-      diagnosis,
-      notes,
-      doctorId: doctor.uid
-    };
+    const firstName = name.trim().split(' ')[0].toLowerCase();
 
     try {
       const dbInstance = await initDB();
-      console.log("Saving to IndexedDB:", newPatient);
-      await savePatientLocally(newPatient); // Save to IndexedDB first
+      const tx = dbInstance.transaction('patients', 'readonly');
+      const store = tx.objectStore('patients');
+      const allPatientsRaw = await store.getAll();
+      const allPatients = Array.isArray(allPatientsRaw) ? allPatientsRaw : [];
+
+      const duplicateLocal = allPatients.find(
+        (p) => p.doctorId === doctor.uid && p.name.trim().split(' ')[0].toLowerCase() === firstName
+      );
+
+      if (duplicateLocal) {
+        setError(`A patient with the first name "${firstName}" already exists.`);
+        return;
+      }
 
       if (navigator.onLine) {
-        console.log("Online: Syncing to Firestore");
-        await addDoc(collection(db, "patients"), newPatient); // Save to Firestore if online
+        const q = query(collection(db, "patients"), where("doctorId", "==", doctor.uid));
+        const querySnapshot = await getDocs(q);
+        const duplicateFirestore = querySnapshot.docs.find((doc) => {
+          const data = doc.data();
+          return data.name.trim().split(' ')[0].toLowerCase() === firstName;
+        });
+
+        if (duplicateFirestore) {
+          setError(`A patient with the first name "${firstName}" already exists online.`);
+          return;
+        }
+      }
+
+      const newPatient = {
+        id: uuidv4(),
+        name,
+        gender,
+        dob,
+        diagnosis,
+        notes,
+        doctorId: doctor.uid
+      };
+
+      await savePatientLocally(newPatient);
+
+      if (navigator.onLine) {
+        await addDoc(collection(db, "patients"), newPatient);
         alert("Patient saved and synced online.");
       } else {
         alert("Patient saved locally. Will sync when online.");
@@ -56,8 +84,8 @@ export default function AddPatient() {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      setError("Failed to save patient locally.");
+      console.error("Error while saving patient:", err);
+      setError("Failed to save patient. " + (err.message || ''));
     }
   };
 

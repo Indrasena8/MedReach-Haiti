@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../auth/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updatePassword } from 'firebase/auth';
-import { useNavigate, Link } from 'react-router-dom'; 
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function UpdateProfile() {
   const [formData, setFormData] = useState({
@@ -23,10 +23,16 @@ export default function UpdateProfile() {
     if (!user) return;
 
     const fetchDoctor = async () => {
-      const docRef = doc(db, 'doctors', user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setFormData(docSnap.data());
+      try {
+        const docRef = doc(db, 'doctors', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setFormData(docSnap.data());
+        } else {
+          console.warn("Doctor profile not found.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch doctor profile:", err);
       }
     };
 
@@ -47,18 +53,28 @@ export default function UpdateProfile() {
     if (!user) return;
 
     try {
-      await updateDoc(doc(db, 'doctors', user.uid), formData);
+      const docRef = doc(db, 'doctors', user.uid);
+      await updateDoc(docRef, formData);
 
       if (newPassword && newPassword.length >= 6) {
-        await updatePassword(user, newPassword);
-        alert('Password updated successfully!');
+        try {
+          await updatePassword(user, newPassword);
+          alert('Password updated successfully!');
+        } catch (err) {
+          if (err.code === 'auth/requires-recent-login') {
+            alert('Please logout and login again before changing your password.');
+          } else {
+            console.error("Password update failed:", err);
+            alert('Password update failed: ' + err.message);
+          }
+        }
       }
 
       alert('Profile updated successfully!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Something went wrong. Please try again.');
+      alert(`Something went wrong: ${error.message}`);
     }
   };
 
