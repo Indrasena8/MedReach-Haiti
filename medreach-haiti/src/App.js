@@ -5,6 +5,7 @@ import AddPatient from './pages/AddPatient';
 import PatientDetails from './pages/PatientDetails';
 import UpdateProfile from './pages/UpdateProfile';
 import Login from './auth/Login';
+import Signup from './auth/Signup';
 import { auth } from './auth/firebase';
 // index.js or App.js
 import './App.css'; // or './App.css'
@@ -16,6 +17,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
 
         {/* Protected routes */}
         <Route path="/" element={<Layout />}>
