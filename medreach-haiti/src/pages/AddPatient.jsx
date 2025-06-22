@@ -10,9 +10,7 @@ export default function AddPatient() {
   const [form, setForm] = useState({
     name: '',
     gender: '',
-    dob: '',
-    diagnosis: '',
-    notes: ''
+    dob: ''
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -23,11 +21,11 @@ export default function AddPatient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { name, gender, dob, diagnosis, notes } = form;
+    const { name, gender, dob } = form;
     const doctor = auth.currentUser;
 
-    if (!name || !gender || !dob || !diagnosis || !notes) {
-      setError("All fields are required.");
+    if (!name || !gender || !dob) {
+      setError("Name, gender, and DOB are required.");
       return;
     }
 
@@ -68,8 +66,6 @@ export default function AddPatient() {
         name,
         gender,
         dob,
-        diagnosis,
-        notes,
         doctorId: doctor.uid
       };
 
@@ -98,8 +94,6 @@ export default function AddPatient() {
         <input name="name" placeholder="Patient Name" onChange={handleChange} style={inputStyle} />
         <input name="gender" placeholder="Gender" onChange={handleChange} style={inputStyle} />
         <input name="dob" type="date" placeholder="Date of Birth" onChange={handleChange} style={inputStyle} />
-        <input name="diagnosis" placeholder="Diagnosis" onChange={handleChange} style={inputStyle} />
-        <textarea name="notes" placeholder="Doctor's Notes" onChange={handleChange} rows={3} style={{ ...inputStyle, resize: 'none' }} />
 
         <button type="submit" style={buttonStyle}>Save</button>
       </form>
