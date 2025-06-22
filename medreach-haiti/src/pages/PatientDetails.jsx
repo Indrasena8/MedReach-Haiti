@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../auth/firebase';
+import { saveVisitLocally } from './localDb';
+import { getLocalVisits } from './localDb';
+import { v4 as uuidv4 } from 'uuid'; 
 import {
   doc,
   getDoc,
@@ -26,43 +29,68 @@ export default function PatientDetails() {
   const [newVisit, setNewVisit] = useState({ date: '', reason: '', prescription: '' });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const dbInstance = await initDB();
-        const localData = await dbInstance
-          .transaction('patients', 'readonly')
-          .objectStore('patients')
-          .get(id);
+  const fetchData = async () => {
+    try {
+      const dbInstance = await initDB();
+      const localData = await dbInstance
+        .transaction('patients', 'readonly')
+        .objectStore('patients')
+        .get(id);
 
-        if (localData) {
-          console.log('Loaded from IndexedDB:', localData);
-          setPatient(localData);
-        }
-
-        if (navigator.onLine) {
-          const docRef = doc(db, 'patients', id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setPatient(data);
-            await savePatientLocally(data);
-          }
-
-          const q = query(collection(db, 'visits'), where('patientId', '==', id));
-          const visitDocs = await getDocs(q);
-          const visitList = visitDocs.docs.map(doc => doc.data());
-          setVisits(visitList);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching patient data:', err);
-        setLoading(false);
+      if (localData) {
+        setPatient(localData);
       }
-    };
+      let localVisits = await getLocalVisits(id);
+      setVisits(localVisits);
 
-    fetchData();
-  }, [id]);
+      if (navigator.onLine) {
+        const docRef = doc(db, 'patients', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setPatient(data);
+          await savePatientLocally(data);
+        }
+
+        const q = query(collection(db, 'visits'), where('patientId', '==', id));
+        const visitDocs = await getDocs(q);
+        const visitList = visitDocs.docs.map(doc => doc.data());
+        const allVisits = [...localVisits, ...visitList];
+        const deduped = allVisits.reduce((acc, curr) => {
+        if (!acc.some(v => v.visitId === curr.visitId)) acc.push(curr);
+        return acc;
+        }, []);
+        setVisits(deduped);
+
+        // Save each visit locally
+        for (const v of visitList) {
+          await saveVisitLocally(v);
+        }
+
+
+
+      const unsynced = localVisits.filter(v => !v.synced);
+        for (const v of unsynced) {
+          const q = query(collection(db, 'visits'), where('visitId', '==', v.visitId));
+          const existing = await getDocs(q);
+          if (existing.empty) {
+            await addDoc(collection(db, 'visits'), v);
+          }
+          const updated = { ...v, synced: true };
+          const tx = dbInstance.transaction('visits', 'readwrite');
+          tx.objectStore('visits').put(updated);
+        }
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Error during fetch/sync:', err);
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [id]);
 
   const handleChange = (e) => {
     setPatient(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -85,24 +113,34 @@ export default function PatientDetails() {
   };
 
   const handleAddVisit = async () => {
-    const payload = {
-      ...newVisit,
-      patientId: id,
-    };
-    try {
-      if (navigator.onLine) {
-        await addDoc(collection(db, 'visits'), payload);
-        alert('Visit added');
-        setVisits(prev => [...prev, payload]);
-      } else {
-        alert('Cannot save visit while offline.');
-      }
-      setShowAddVisit(false);
-      setNewVisit({ date: '', reason: '', prescription: '' });
-    } catch (err) {
-      alert('Error adding visit');
-    }
+  const payload = {
+    ...newVisit,
+    patientId: id,
+    synced: false,
+    visitId: uuidv4(),
   };
+
+  try {
+
+    await saveVisitLocally(payload); // 🔄 save offline
+    setVisits(prev => [...prev, payload]);
+    if (navigator.onLine) {
+      await addDoc(collection(db, 'visits'), payload);
+      payload.synced = true;
+      const db = await initDB();
+      const tx = db.transaction('visits', 'readwrite');
+      tx.objectStore('visits').put(payload);
+      //alert('Visit added');
+    } else {
+      alert('Saved locally. Will sync later.');
+    }
+  } catch (err) {
+    alert('Saved locally. Will sync later');
+    console.error(err);
+  }
+  setShowAddVisit(false);
+  setNewVisit({ date: '', reason: '', prescription: '' });
+};
 
   if (loading) return <p style={{ padding: '2rem' }}>Loading patient data...</p>;
 
