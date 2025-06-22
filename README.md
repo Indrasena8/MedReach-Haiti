@@ -1,26 +1,23 @@
-# MedReach Haiti 🇭🇹
-> Offline-first Electronic Health Record (EHR) app built for Haiti's healthcare challenges.
+# 🏥 MedReach - Offline-Capable Patient Health Record System
 
-## 🌍 Problem
-Haitians in rural areas lack access to consistent internet and proper health records, leading to misdiagnoses and poor treatment outcomes.
+MedReach is a modern web application designed for healthcare professionals in regions with unreliable internet access. It enables doctors to manage patient records and visit histories **even when offline**, syncing seamlessly when back online.
 
-## 💡 Solution
-MedReach Haiti stores patient visit history **offline** and syncs it to the cloud **when internet is available**, ensuring no medical history is lost.
+## 🚀 Features
 
-## ⚙️ Features
-- Offline-first patient record creation
-- Sync engine with network detection
-- Doctor search by ID or name
-- Visit history + medication logs
-- Firebase or Node backend
+- 🔐 **Doctor Authentication** using Firebase Auth
+- 📝 **Add / Edit Patients** with diagnosis and notes
+- 📆 **Track Visit Histories** per patient
+- 🌐 **Offline Support** using IndexedDB for local storage
+- 🔄 **Automatic Sync** of patient and visit data to Firestore when online
+- 🎯 **Deduplication** of visits using UUID-based `visitId`
+- 📱 Mobile-friendly UI (no external CSS framework used)
 
-## 🛠 Tech Stack
-- Frontend: React.js / React Native
-- Offline: IndexedDB (via idb)
-- Backend: Firebase Firestore / Node.js + MongoDB
-- Sync Logic: Service Workers / Background Sync
+## 🧰 Tech Stack
 
-## 🚀 How to Run
-```bash
-npm install
-npm start
+- **Frontend:** React.js, React Router
+- **Authentication:** Firebase Authentication
+- **Online Database:** Firebase Firestore
+- **Offline Storage:** IndexedDB (`idb`)
+- **Sync Logic:** Custom localDb.js utilities
+- **Unique IDs:** `uuid` package
+- **Build Tool:** Vite / Create React App (choose one)
