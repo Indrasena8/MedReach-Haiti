@@ -10,7 +10,7 @@ MedReach is a modern web application designed for healthcare professionals in re
 - 🌐 **Offline Support** using IndexedDB for local storage
 - 🔄 **Automatic Sync** of patient and visit data to Firestore when online
 - 🎯 **Deduplication** of visits using UUID-based `visitId`
-- 📱 Mobile-friendly UI (no external CSS framework used)
+- 📱 Mobile-friendly UI 
 
 ## 🧰 Tech Stack
 
@@ -20,4 +20,4 @@ MedReach is a modern web application designed for healthcare professionals in re
 - **Offline Storage:** IndexedDB (`idb`)
 - **Sync Logic:** Custom localDb.js utilities
 - **Unique IDs:** `uuid` package
-- **Build Tool:** Vite / Create React App (choose one)
+- **Build Tool:** Vite / Create React App
