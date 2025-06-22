@@ -31,13 +31,20 @@ export default function PatientDetails() {
   useEffect(() => {
   const fetchData = async () => {
     try {
-      const dbInstance = await initDB();
-      const localData = await dbInstance
-        .transaction('patients', 'readonly')
-        .objectStore('patients')
-        .get(id);
+      const getLocalPatient = (db, id) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('patients', 'readonly');
+          const store = tx.objectStore('patients');
+          const request = store.get(id);
 
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      };
+      const dbInstance = await initDB();
+      const localData = await getLocalPatient(dbInstance, id);
       if (localData) {
+        console.log('Loaded from IndexedDB:', localData);
         setPatient(localData);
       }
       let localVisits = await getLocalVisits(id);
